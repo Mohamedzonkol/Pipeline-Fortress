@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+    tools {
+        jdk 'jdk17'
+        maven 'maven-3'
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages {
+        stage('Checkout the Project') {
+            steps {
+                git branch: 'main', credentialsId: 'git-credintial', url: 'https://github.com/Mohamedzonkol/CICD-Corporate-DevOps-Pipeline-Project.git'
+            }
+        }
+        stage('Compile the Source Code') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+        stage('Test unit test cases') {
+            steps {
+                sh "mvn test"
+            }
+        }
+         stage('Vulnerability Scan by trivy') {
+            steps {
+                sh "trivy fs --format table -o trivy-fs-report.html ."
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') {
+               sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=projecttest -Dsonar.projectKey=projecttest \
+               -Dsonar.java.binaries=. '''
+               }
+            }
+        }
+            stage('WaitforQualityGate') {
+            steps {
+             script {
+                 waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+             }
+               }
+            }
+               stage('Build the package') {
+            steps {
+                sh "mvn package"
+             }
+               }
+                 stage ('Build & tag the Docker Image') {
+                     steps {
+                         script {
+                             withDockerRegistry(credentialsId: 'dock-cred', toolName: 'docker') {
+                               sh "docker build -t mohamedelsayed7/techgame:latest ."
+                            }
+                         }
+                     }
+                 }
+                 stage('Docker Image Scanning by trivy') {
+                   steps {
+                    sh "trivy image --format table -o trivy-image-report.html mohamedelsayed7/techgame"
+                }
+               }
+               stage ('Push the Docker Image to Docker Hub') {
+                     steps {
+                         script {
+                             withDockerRegistry(credentialsId: 'dock-cred', toolName: 'docker') {
+                               sh "docker push mohamedelsayed7/techgame:latest"
+                            }
+                         }
+                     }
+                 }
+                 stage ('Deploy the Docker Image to k8s Cluster') {
+                     steps {
+                     withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://50.642.15.22:6443') {
+                     sh '''kubectl apply -f deployment.yml
+                     	   kubectl apply -f service.yml
+                     '''
+                    }
+                 }
+             }
+              stage ('Verify the Resources like POD, SVC on k8s cluster') {
+                     steps {
+                     withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://50.642.15.22:6443') {
+                     sh 'kubectl get pods -n webapps'
+                     sh 'kubectl get svc -n webapps'
+                    }
+                 }
+             }
+           }
+}
