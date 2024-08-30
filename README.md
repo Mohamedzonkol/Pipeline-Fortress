@@ -37,7 +37,7 @@ The pipeline architecture follows these steps:
 
 ## Pipeline Diagram
 
-![CI/CD Pipeline](pipeline.jpeg)
+![CI/CD Pipeline](https://github.com/Mohamedzonkol/Project/blob/main/Video-Demo/pipeline.png)
 
 ## Project Setup
 
