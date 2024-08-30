@@ -165,3 +165,5 @@ The pipeline architecture follows these steps:
 - **Blackbox Exporter:** Install Blackbox Exporter to monitor the availability of your services and endpoints. This tool allows you to perform health checks (e.g., HTTP, DNS, TCP) on your services and visualize the results in Grafana.
 
 - **Node Exporter:** Deploy Node Exporter on all VMs to monitor hardware and OS metrics such as CPU, memory, and disk usage. Prometheus will collect these metrics and Grafana can be used to visualize them.
+## Monitoring Setup
+This pipeline automates the entire CI/CD process, from code integration and testing to deployment and monitoring in a Kubernetes environment. It ensures that the code is secure, high-quality, and always ready for production.
