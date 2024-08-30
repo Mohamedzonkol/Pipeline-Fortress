@@ -1,0 +1,15 @@
+version: "2"
+authtoken: 2jwIuBmDYgokczdasdaePuDH9Hs_22dnJ27twjyeMnsAWyAQs
+
+tunnels:
+  port_9000:
+    proto: http
+    addr: 9000
+  port_8081:
+    proto: http
+    addr: 8081
+  k8s:
+    proto: http
+    addr: 8443
+    host_header: 192.168.49.2
+
