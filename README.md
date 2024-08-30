@@ -156,3 +156,12 @@ The pipeline architecture follows these steps:
           }
       }
   }
+## Monitoring Setup
+
+- **Prometheus:** Install Prometheus to collect metrics from Kubernetes and your applications. Configure it to scrape data from your Kubernetes nodes, pods, and any other endpoints that you wish to monitor.
+  
+- **Grafana:** Install Grafana and configure it to use Prometheus as a data source. Create dashboards in Grafana to visualize the metrics collected by Prometheus, including resource usage, application performance, and infrastructure health.
+
+- **Blackbox Exporter:** Install Blackbox Exporter to monitor the availability of your services and endpoints. This tool allows you to perform health checks (e.g., HTTP, DNS, TCP) on your services and visualize the results in Grafana.
+
+- **Node Exporter:** Deploy Node Exporter on all VMs to monitor hardware and OS metrics such as CPU, memory, and disk usage. Prometheus will collect these metrics and Grafana can be used to visualize them.
