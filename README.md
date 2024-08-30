@@ -98,4 +98,61 @@ The pipeline architecture follows these steps:
               steps {
                   withSonarQubeEnv('sonar') {
                      sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=projecttest -Dsonar.projectKey=projecttest \
-                     -Dson
+                     -Dsonar.java.binaries=. '''
+                  }
+              }
+          }
+          stage('Wait for Quality Gate') {
+              steps {
+                  script {
+                      waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                  }
+              }
+          }
+          stage('Build the Package') {
+              steps {
+                  sh "mvn package"
+              }
+          }
+          stage ('Build & Tag the Docker Image') {
+              steps {
+                  script {
+                      withDockerRegistry(credentialsId: 'dock-cred', toolName: 'docker') {
+                          sh "docker build -t mohamedelsayed7/techgame:latest ."
+                      }
+                  }
+              }
+          }
+          stage('Docker Image Scanning by Trivy') {
+              steps {
+                  sh "trivy image --format table -o trivy-image-report.html mohamedelsayed7/techgame"
+              }
+          }
+          stage ('Push the Docker Image to Docker Hub') {
+              steps {
+                  script {
+                      withDockerRegistry(credentialsId: 'dock-cred', toolName: 'docker') {
+                          sh "docker push mohamedelsayed7/techgame:latest"
+                      }
+                  }
+              }
+          }
+          stage ('Deploy the Docker Image to k8s Cluster') {
+              steps {
+                  withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://50.642.15.22:6443') {
+                      sh '''kubectl apply -f deployment.yml
+                            kubectl apply -f service.yml
+                      '''
+                  }
+              }
+          }
+          stage ('Verify the Resources like POD, SVC on k8s cluster') {
+              steps {
+                  withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://50.642.15.22:6443') {
+                      sh 'kubectl get pods -n webapps'
+                      sh 'kubectl get svc -n webapps'
+                  }
+              }
+          }
+      }
+  }
